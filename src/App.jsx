@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import FlagCard from './components/FlagCard.jsx';
+import Header from './components/Header.jsx';
+import SiteFooter from './components/SiteFooter.jsx';
 
 export default function App() {
   const [flag, setFlag] = useState(null);
@@ -30,32 +32,24 @@ export default function App() {
     fetchFlag();
   }, [fetchFlag]);
 
+  useEffect(() => {
+    const onMove = (e) => {
+      const x = (e.clientX / window.innerWidth) * 20;
+      const y = (e.clientY / window.innerHeight) * 20;
+      document.body.style.backgroundPosition = `${x}px ${y}px, 0 0, 0 0, 40px 40px, 40px 40px`;
+    };
+    document.addEventListener('mousemove', onMove);
+    return () => document.removeEventListener('mousemove', onMove);
+  }, []);
+
   return (
     <div className="app">
-      <div className="bg-grid" aria-hidden="true" />
-      <div className="bg-scanlines" aria-hidden="true" />
-      <div className="bg-glow bg-glow--left" aria-hidden="true" />
-      <div className="bg-glow bg-glow--right" aria-hidden="true" />
-
-      <header className="header">
-        <p className="header__badge">SECURE CHANNEL // ACTIVE</p>
-        <h1 className="header__title">Simple CTF</h1>
-        <p className="header__subtitle">Classified transmission intercepted</p>
-      </header>
-
-      <main className="main">
-        <FlagCard
-          flag={flag}
-          status={status}
-          error={error}
-          onRetry={fetchFlag}
-        />
+      <div className="app__grid-bg" aria-hidden="true" />
+      <Header />
+      <main className="app__main">
+        <FlagCard flag={flag} status={status} error={error} onRetry={fetchFlag} />
       </main>
-
-      <footer className="footer">
-        <span className="footer__dot" />
-        Node relay online
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

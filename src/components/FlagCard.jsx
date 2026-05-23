@@ -1,14 +1,30 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { sha256Hex } from '../utils/crypto.js';
+import { formatPrecisionTimestamp } from '../utils/timestamp.js';
+import CopyToast from './CopyToast.jsx';
 
 export default function FlagCard({ flag, status, error, onRetry }) {
   const [copied, setCopied] = useState(false);
+  const [hash, setHash] = useState('');
+  const [timestamp, setTimestamp] = useState(formatPrecisionTimestamp());
+
+  useEffect(() => {
+    if (!flag) {
+      setHash('');
+      return;
+    }
+    sha256Hex(flag).then(setHash).catch(() => setHash('—'));
+  }, [flag]);
+
+  useEffect(() => {
+    const id = setInterval(() => setTimestamp(formatPrecisionTimestamp()), 84);
+    return () => clearInterval(id);
+  }, []);
 
   const handleCopy = async () => {
     if (!flag) return;
     try {
       await navigator.clipboard.writeText(flag);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     } catch {
       const textarea = document.createElement('textarea');
       textarea.value = flag;
@@ -18,73 +34,127 @@ export default function FlagCard({ flag, status, error, onRetry }) {
       textarea.select();
       document.execCommand('copy');
       document.body.removeChild(textarea);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   return (
-    <article className={`flag-card flag-card--${status}`}>
-      <div className="flag-card__corner flag-card__corner--tl" aria-hidden="true" />
-      <div className="flag-card__corner flag-card__corner--tr" aria-hidden="true" />
-      <div className="flag-card__corner flag-card__corner--bl" aria-hidden="true" />
-      <div className="flag-card__corner flag-card__corner--br" aria-hidden="true" />
+    <>
+      <article className={`vault ${status === 'success' ? 'vault--success' : ''}`}>
+        <div className="vault__scanline" aria-hidden="true" />
 
-      <div className="flag-card__header">
-        <span className="flag-card__label">TARGET FLAG</span>
-        <span className="flag-card__status">
-          {status === 'loading' && 'DECRYPTING...'}
-          {status === 'success' && 'VERIFIED'}
-          {status === 'error' && 'SIGNAL LOST'}
-        </span>
-      </div>
-
-      <div className="flag-card__body">
-        {status === 'loading' && (
-          <div className="flag-skeleton" aria-label="Loading flag">
-            <div className="flag-skeleton__line flag-skeleton__line--long" />
-            <div className="flag-skeleton__line flag-skeleton__line--short" />
+        <div className="vault__bar">
+          <div className="vault__bar-left">
+            <span className="vault__pulse" aria-hidden="true" />
+            <span className="vault__bar-label">Classified transmission // inbound</span>
           </div>
-        )}
-
-        {status === 'error' && (
-          <div className="flag-error">
-            <p className="flag-error__message">{error}</p>
-            <button type="button" className="flag-error__retry" onClick={onRetry}>
-              Retry connection
-            </button>
+          <div className="vault__bar-right">
+            <span className="material-symbols-outlined vault__signal" aria-hidden="true">
+              signal_cellular_alt
+            </span>
+            <span className="vault__stable">98.4% stable</span>
           </div>
-        )}
+        </div>
 
-        {status === 'success' && flag && (
-          <div className="flag-success">
-            <p className="flag-display" aria-live="polite">
-              {flag.split('').map((char, i) => (
-                <span
-                  key={`${char}-${i}`}
-                  className="flag-display__char"
-                  style={{ animationDelay: `${i * 30}ms` }}
-                >
-                  {char}
+        <div className="vault__content">
+          {status === 'loading' && (
+            <div className="vault__section vault__section--center">
+              <h2 className="vault__heading">Decrypting transmission</h2>
+              <div className="vault__flag-box">
+                <div className="flag-skeleton">
+                  <div className="flag-skeleton__line flag-skeleton__line--long" />
+                  <div className="flag-skeleton__line flag-skeleton__line--short" />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {status === 'error' && (
+            <div className="vault__section vault__section--center">
+              <h2 className="vault__heading vault__heading--error">Signal lost</h2>
+              <p className="vault__error-msg">{error}</p>
+              <button type="button" className="vault__copy" onClick={onRetry}>
+                <span className="material-symbols-outlined" aria-hidden="true">
+                  refresh
                 </span>
-              ))}
-            </p>
-            <button
-              type="button"
-              className={`flag-copy${copied ? ' flag-copy--copied' : ''}`}
-              onClick={handleCopy}
-              aria-label={copied ? 'Flag copied' : 'Copy flag to clipboard'}
-            >
-              {copied ? 'Copied!' : 'Copy flag'}
-            </button>
-          </div>
-        )}
-      </div>
+                <span>Retry connection</span>
+              </button>
+            </div>
+          )}
 
-      <div className="flag-card__footer">
-        <span className="flag-card__hash">SHA-256: classified</span>
-        <span className="flag-card__pulse" aria-hidden="true" />
-      </div>
-    </article>
+          {status === 'success' && flag && (
+            <>
+              <div className="vault__section vault__section--center">
+                <h2 className="vault__heading">Protocol success // flag acquired</h2>
+                <div className="vault__flag-box">
+                  <span className="vault__corner vault__corner--tl" aria-hidden="true" />
+                  <span className="vault__corner vault__corner--tr" aria-hidden="true" />
+                  <span className="vault__corner vault__corner--bl" aria-hidden="true" />
+                  <span className="vault__corner vault__corner--br" aria-hidden="true" />
+                  <p className="vault__flag" aria-live="polite">
+                    {flag}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  className="vault__copy"
+                  onClick={handleCopy}
+                  aria-label="Copy flag to clipboard"
+                >
+                  <span className="material-symbols-outlined" aria-hidden="true">
+                    content_copy
+                  </span>
+                  <span>Copy flag</span>
+                </button>
+              </div>
+
+              <div className="vault__meta">
+                <div className="vault__meta-cell">
+                  <span className="vault__meta-label">SHA-256 hash identifier</span>
+                  <p className="vault__meta-value vault__meta-value--hash">{hash || '…'}</p>
+                </div>
+                <div className="vault__meta-cell">
+                  <span className="vault__meta-label">Precision timestamp</span>
+                  <p className="vault__meta-value">
+                    T+ <span>{timestamp}</span>
+                  </p>
+                </div>
+              </div>
+
+              <div className="vault__status-row">
+                <div className="vault__status-item">
+                  <span className="vault__status-square" />
+                  <span>Secure channel // active</span>
+                </div>
+                <div className="vault__status-item">
+                  <span className="vault__status-square" />
+                  <span>Verified</span>
+                </div>
+                <div className="vault__status-item vault__status-item--dim">
+                  <span className="vault__status-square vault__status-square--dim" />
+                  <span>Node relay online</span>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+
+        <div className="vault__chatter">
+          <div className="vault__viz" aria-hidden="true">
+            <span style={{ height: '4px' }} />
+            <span style={{ height: '8px' }} />
+            <span style={{ height: '12px' }} />
+            <span style={{ height: '8px' }} />
+            <span style={{ height: '4px' }} />
+          </div>
+          <span className="vault__chatter-text">
+            Obsidian protocol v2.0.4 — secure transmission end
+          </span>
+        </div>
+      </article>
+
+      <CopyToast visible={copied} />
+    </>
   );
 }

@@ -3,7 +3,7 @@ import { sha256Hex } from '../utils/crypto.js';
 import { formatPrecisionTimestamp } from '../utils/timestamp.js';
 import CopyToast from './CopyToast.jsx';
 
-export default function FlagCard({ flag, status, error, onRetry }) {
+export default function FlagCard({ config, flag, status, error, onRetry }) {
   const [copied, setCopied] = useState(false);
   const [hash, setHash] = useState('');
   const [timestamp, setTimestamp] = useState(formatPrecisionTimestamp());
@@ -47,20 +47,20 @@ export default function FlagCard({ flag, status, error, onRetry }) {
         <div className="vault__bar">
           <div className="vault__bar-left">
             <span className="vault__pulse" aria-hidden="true" />
-            <span className="vault__bar-label">Classified transmission // inbound</span>
+            <span className="vault__bar-label">{config.transmissionLabel}</span>
           </div>
           <div className="vault__bar-right">
             <span className="material-symbols-outlined vault__signal" aria-hidden="true">
               signal_cellular_alt
             </span>
-            <span className="vault__stable">98.4% stable</span>
+            <span className="vault__stable">{config.signalStable}</span>
           </div>
         </div>
 
         <div className="vault__content">
           {status === 'loading' && (
             <div className="vault__section vault__section--center">
-              <h2 className="vault__heading">Decrypting transmission</h2>
+              <h2 className="vault__heading">{config.headingLoading}</h2>
               <div className="vault__flag-box">
                 <div className="flag-skeleton">
                   <div className="flag-skeleton__line flag-skeleton__line--long" />
@@ -72,13 +72,13 @@ export default function FlagCard({ flag, status, error, onRetry }) {
 
           {status === 'error' && (
             <div className="vault__section vault__section--center">
-              <h2 className="vault__heading vault__heading--error">Signal lost</h2>
+              <h2 className="vault__heading vault__heading--error">{config.headingError}</h2>
               <p className="vault__error-msg">{error}</p>
               <button type="button" className="vault__copy" onClick={onRetry}>
                 <span className="material-symbols-outlined" aria-hidden="true">
                   refresh
                 </span>
-                <span>Retry connection</span>
+                <span>{config.retryButton}</span>
               </button>
             </div>
           )}
@@ -86,7 +86,7 @@ export default function FlagCard({ flag, status, error, onRetry }) {
           {status === 'success' && flag && (
             <>
               <div className="vault__section vault__section--center">
-                <h2 className="vault__heading">Protocol success // flag acquired</h2>
+                <h2 className="vault__heading">{config.headingSuccess}</h2>
                 <div className="vault__flag-box">
                   <span className="vault__corner vault__corner--tl" aria-hidden="true" />
                   <span className="vault__corner vault__corner--tr" aria-hidden="true" />
@@ -105,17 +105,17 @@ export default function FlagCard({ flag, status, error, onRetry }) {
                   <span className="material-symbols-outlined" aria-hidden="true">
                     content_copy
                   </span>
-                  <span>Copy flag</span>
+                  <span>{config.copyButton}</span>
                 </button>
               </div>
 
               <div className="vault__meta">
                 <div className="vault__meta-cell">
-                  <span className="vault__meta-label">SHA-256 hash identifier</span>
+                  <span className="vault__meta-label">{config.metaHashLabel}</span>
                   <p className="vault__meta-value vault__meta-value--hash">{hash || '…'}</p>
                 </div>
                 <div className="vault__meta-cell">
-                  <span className="vault__meta-label">Precision timestamp</span>
+                  <span className="vault__meta-label">{config.metaTimestampLabel}</span>
                   <p className="vault__meta-value">
                     T+ <span>{timestamp}</span>
                   </p>
@@ -125,15 +125,15 @@ export default function FlagCard({ flag, status, error, onRetry }) {
               <div className="vault__status-row">
                 <div className="vault__status-item">
                   <span className="vault__status-square" />
-                  <span>Secure channel // active</span>
+                  <span>{config.statusSecure}</span>
                 </div>
                 <div className="vault__status-item">
                   <span className="vault__status-square" />
-                  <span>Verified</span>
+                  <span>{config.statusVerified}</span>
                 </div>
                 <div className="vault__status-item vault__status-item--dim">
                   <span className="vault__status-square vault__status-square--dim" />
-                  <span>Node relay online</span>
+                  <span>{config.statusNode}</span>
                 </div>
               </div>
             </>
@@ -148,13 +148,11 @@ export default function FlagCard({ flag, status, error, onRetry }) {
             <span style={{ height: '8px' }} />
             <span style={{ height: '4px' }} />
           </div>
-          <span className="vault__chatter-text">
-            Obsidian protocol v2.0.4 — secure transmission end
-          </span>
+          <span className="vault__chatter-text">{config.chatterFooter}</span>
         </div>
       </article>
 
-      <CopyToast visible={copied} />
+      <CopyToast visible={copied} message={config.copyToast} />
     </>
   );
 }

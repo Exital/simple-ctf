@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { apiUrl } from '../apiUrl.js';
 import { defaultConfig } from '../configDefaults.js';
 
 export function useConfig() {
@@ -11,7 +12,7 @@ export function useConfig() {
 
     async function load() {
       try {
-        const res = await fetch('/api/config');
+        const res = await fetch(apiUrl('/api/config'));
         if (!res.ok) {
           throw new Error(`Config request failed (${res.status})`);
         }

@@ -23,9 +23,9 @@ docker-entrypoint.sh  ──► sets/generates FLAG, writes /etc/ctf-flag.env
         │
         ▼
 Express (port 3000)
-  ├── GET /api/flag    → { "flag": "..." }
-  ├── GET /api/config  → UI strings from env (defaults if unset)
-  └── static/          → React build (dist/)
+  ├── GET {BASE_PATH}/api/flag    → { "flag": "..." }
+  ├── GET {BASE_PATH}/api/config  → UI strings from env (defaults if unset)
+  └── static/                     → React build (dist/) under {BASE_PATH}/
 ```
 
 - **React + Vite** — frontend
@@ -38,6 +38,33 @@ Express (port 3000)
 |----------|---------|-------------|
 | `FLAG` | Auto-generated at startup | Flag value shown in the UI and exposed in the container |
 | `PORT` | `3000` | HTTP listen port |
+| `BASE_PATH` | *(empty — app at `/`)* | URL prefix for subpath deployments (e.g. `/ctf` for Ingress path-prefix). **Runtime only** — no rebuild required. |
+
+### Subpath deployment (`BASE_PATH`)
+
+For Kubernetes Ingress (or similar) that exposes the app under a path prefix, set `BASE_PATH` when you run the container. The same image works at `/` or under any prefix; asset and API URLs are resolved relative to the page URL at runtime.
+
+With `BASE_PATH=/ctf`:
+
+- UI: `https://example.com/ctf/`
+- API: `https://example.com/ctf/api/*`
+- Assets: `https://example.com/ctf/assets/*`
+
+```bash
+docker build -t simple-ctf .
+docker run -p 3000:3000 -e BASE_PATH=/ctf simple-ctf
+```
+
+Open [http://localhost:3000/ctf/](http://localhost:3000/ctf/).
+
+Local production-style check:
+
+```bash
+npm run build
+BASE_PATH=/ctf FLAG=CTF{dev} npm start
+```
+
+Omit `BASE_PATH` (or set it to `/`) for root deployment at [http://localhost:3000](http://localhost:3000).
 
 ### Provided flag
 
@@ -140,6 +167,8 @@ docker run -p 3000:3000 \
 
 ## API reference
 
+Paths below assume `BASE_PATH` is unset (root). With `BASE_PATH=/ctf`, prefix routes with `/ctf` (e.g. `GET /ctf/api/flag`).
+
 ### `GET /api/flag`
 
 Returns the flag for the current container.
@@ -188,6 +217,7 @@ simple-ctf/
 ├── docker-entrypoint.sh
 ├── README.md
 ├── package.json
+├── basePath.js        # BASE_PATH normalization (shared by Vite + Express)
 ├── server/
 │   ├── index.js       # Express app
 │   ├── config.js      # env → config merge

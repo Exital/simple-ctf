@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import FlagCard from './components/FlagCard.jsx';
 import Header from './components/Header.jsx';
 import SiteFooter from './components/SiteFooter.jsx';
+import { apiUrl } from './apiUrl.js';
 import { useConfig } from './hooks/useConfig.js';
 
 export default function App() {
@@ -14,7 +15,7 @@ export default function App() {
     setStatus('loading');
     setError(null);
     try {
-      const res = await fetch('/api/flag');
+      const res = await fetch(apiUrl('/api/flag'));
       if (!res.ok) {
         throw new Error(`Request failed (${res.status})`);
       }

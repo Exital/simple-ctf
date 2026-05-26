@@ -8,7 +8,7 @@ if [ -z "$FLAG" ]; then
     RANDOM_HEX=$(head -c 5 /dev/urandom | od -An -tx1 | tr -d ' \n')
   fi
   export FLAG="CTF{${RANDOM_HEX}}"
-  echo "Generated FLAG: $FLAG"
+  echo "Generated FLAG (auto-generated)"
 else
   echo "Using provided FLAG"
 fi
